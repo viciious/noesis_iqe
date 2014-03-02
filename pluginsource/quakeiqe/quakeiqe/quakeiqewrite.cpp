@@ -183,8 +183,6 @@ void Model_IQE_WriteAnim(noesisAnim_t *anim, noeRAPI_t *rapi)
 {
 	if (!rapi->Noesis_HasActiveGeometry() || rapi->Noesis_GetActiveType() != g_fmtHandle)
 	{
-		//could instead export an anim-only iqm in this condition, but i suspect the functionality wouldn't be used enough to even be worth writing
-		rapi->LogOutput("WARNING: Stand-alone animations cannot be converted to IQE.\nNothing will be written.\n");
 		return;
 	}
 	rapi->Noesis_SetExtraAnimData(anim->data, anim->dataLen);
