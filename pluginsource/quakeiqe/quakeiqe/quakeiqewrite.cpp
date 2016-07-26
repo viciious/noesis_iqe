@@ -178,7 +178,8 @@ bool Model_IQE_Write(noesisModel_t *mdl, RichBitStream *outStream, noeRAPI_t *ra
 }
 
 //catch anim writes
-//(note that this function would normally write converted data to a file at anim->filename, but for this format it instead saves the data to combine with the model output)
+//(note that this function would normally write converted data to a file at anim->filename, 
+// but for this format it instead saves the data to combine with the model output)
 void Model_IQE_WriteAnim(noesisAnim_t *anim, noeRAPI_t *rapi)
 {
 	if (!rapi->Noesis_HasActiveGeometry() || rapi->Noesis_GetActiveType() != g_fmtHandle)
