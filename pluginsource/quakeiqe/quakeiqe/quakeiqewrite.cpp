@@ -43,11 +43,6 @@ bool Model_IQE_Write(noesisModel_t *mdl, RichBitStream *outStream, noeRAPI_t *ra
 													NMSHAREDFL_FLATWEIGHTS_FORCE4 | //force 4 weights per vert for the flat weight array data
 													NMSHAREDFL_REVERSEWINDING //reverse the face winding (as per Quake) - most formats will not want you to do this!
 													);
-	if (pmdl->numBones <= 0)
-	{
-		rapi->LogOutput("ERROR: IQE output is only supported for skeletal models!\n");
-		return false;
-	}
 
 	// header
 	outStream->WriteStringVA("%s", "# Inter-Quake Export\n");
@@ -89,14 +84,11 @@ bool Model_IQE_Write(noesisModel_t *mdl, RichBitStream *outStream, noeRAPI_t *ra
 
 		if (!meshSrc->verts || !meshSrc->tris || !meshSrc->triNeighbors)
 		{
-			rapi->LogOutput("ERROR: Encountered a mesh with no geometry in IQM export!\n");
+			rapi->LogOutput("ERROR: Encountered a mesh with no geometry in IQE export!\n");
 			return false;
 		}
-		if (!meshSrc->flatBoneIdx || !meshSrc->flatBoneWgt)
-		{
-			rapi->LogOutput("ERROR: Encountered an unweighted mesh in IQM export!\n");
-			return false;
-		}
+
+		BOOL haveBones = meshSrc->flatBoneIdx != NULL && meshSrc->flatBoneWgt != NULL;
 
 		outStream->WriteStringVA ("mesh \"%s\"\n" 
 			"\tmaterial \"%s\"\n",
@@ -122,12 +114,14 @@ bool Model_IQE_Write(noesisModel_t *mdl, RichBitStream *outStream, noeRAPI_t *ra
 				mn[j].x, mn[j].y, mn[j].z
 			);
 
-			// influences
-			outStream->WriteStringVA("\tvb");
-
-			for (int k = 0; k < 4; k++)
+			if (haveBones)
 			{
-				outStream->WriteStringVA(" %i %f", idx[j*4+k], wgt[j*4+k] );
+				// influences
+				outStream->WriteStringVA("\tvb");
+				for (int k = 0; k < 4; k++)
+				{
+					outStream->WriteStringVA(" %i %f", idx[j*4+k], wgt[j*4+k] );
+				}
 			}
 
 			outStream->WriteStringVA("\n");
@@ -179,11 +173,13 @@ bool Model_IQE_Write(noesisModel_t *mdl, RichBitStream *outStream, noeRAPI_t *ra
 
 //catch anim writes
 //(note that this function would normally write converted data to a file at anim->filename, 
-// but for this format it instead saves the data to combine with the model output)
+but for this format it instead saves the data to combine with the model output)
 void Model_IQE_WriteAnim(noesisAnim_t *anim, noeRAPI_t *rapi)
 {
 	if (!rapi->Noesis_HasActiveGeometry() || rapi->Noesis_GetActiveType() != g_fmtHandle)
 	{
+		//could instead export an anim-only iqm in this condition, but i suspect the functionality wouldn't be used enough to even be worth writing
+		rapi->LogOutput("WARNING: Stand-alone animations cannot be converted to IQE.\nNothing will be written.\n");
 		return;
 	}
 	rapi->Noesis_SetExtraAnimData(anim->data, anim->dataLen);
